@@ -1,0 +1,80 @@
+name: Campus Task Sentinel
+
+on:
+  schedule:
+    # Setiap 2 jam (UTC). 00:00 UTC = 07:00 WIB.
+    # Hemat kuota gratis Actions; ubah jika perlu lebih sering.
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Restore auth session
+        uses: actions/cache/restore@v4
+        with:
+          path: credentials/auth-state.json
+          key: auth-state-${{ github.repository }}-v1
+          restore-keys: |
+            auth-state-${{ github.repository }}-
+
+      - name: Write Google credentials
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: |
+          mkdir -p credentials
+          printf '%s' "$GOOGLE_CREDENTIALS_JSON" > credentials/google-credentials.json
+          printf '%s' "$GMAIL_TOKEN_JSON" > credentials/gmail-token.json
+
+      - name: Run Campus Task Sentinel
+        env:
+          PORTAL_URL: ${{ secrets.PORTAL_URL }}
+          PORTAL_USERNAME: ${{ secrets.PORTAL_USERNAME }}
+          PORTAL_PASSWORD: ${{ secrets.PORTAL_PASSWORD }}
+          PORTAL_SELECTOR_USERNAME: ${{ secrets.PORTAL_SELECTOR_USERNAME }}
+          PORTAL_SELECTOR_PASSWORD: ${{ secrets.PORTAL_SELECTOR_PASSWORD }}
+          PORTAL_SELECTOR_SUBMIT: ${{ secrets.PORTAL_SELECTOR_SUBMIT }}
+          ELEARNING_URL: ${{ secrets.ELEARNING_URL }}
+          ELEARNING_SELECTOR: ${{ secrets.ELEARNING_SELECTOR }}
+          ELEARNING_MAX_COURSES: ${{ secrets.ELEARNING_MAX_COURSES }}
+          ELEARNING_MAX_SECTIONS: ${{ secrets.ELEARNING_MAX_SECTIONS }}
+          GMAIL_OTP_FROM: ${{ secrets.GMAIL_OTP_FROM }}
+          GMAIL_OTP_SUBJECT: ${{ secrets.GMAIL_OTP_SUBJECT }}
+          GOOGLE_CREDENTIALS_PATH: ./credentials/google-credentials.json
+          GMAIL_TOKEN_PATH: ./credentials/gmail-token.json
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEET_TAB: ${{ secrets.GOOGLE_SHEET_TAB }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PLAYWRIGHT_HEADLESS: 'true'
+          PLAYWRIGHT_TIMEOUT: '90000'
+          OTP_WAIT_MS: '180000'
+          AUTH_STATE_PATH: ./credentials/auth-state.json
+          AUTH_REUSE: 'true'
+        run: npm start
+
+      - name: Save auth session
+        if: always() && hashFiles('credentials/auth-state.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: credentials/auth-state.json
+          key: auth-state-${{ github.repository }}-v1-${{ github.run_id }}

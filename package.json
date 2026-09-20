@@ -1,0 +1,30 @@
+{
+  "name": "campus-task-sentinel",
+  "version": "1.0.0",
+  "description": "Automated campus assignment monitor — portal login, e-learning scrape, Telegram alerts",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "setup:browser": "npx playwright install chromium",
+    "authorize": "node scripts/authorize-gmail.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "telegram",
+    "playwright",
+    "e-learning",
+    "automation",
+    "campus",
+    "assignments"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0",
+    "playwright": "^1.49.1"
+  }
+}

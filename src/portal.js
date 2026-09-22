@@ -420,6 +420,21 @@ async function scrapeElearning(page, env, context) {
   }, contentSel);
 
   let combinedText = `=== DASHBOARD E-LEARNING ===\nURL: ${dashboard.url}\nTitle: ${dashboard.title}\n\n${dashboard.text}`;
+  const assignHrefs = new Set();
+
+  function noteAssignHref(href) {
+    if (href && /\/mod\/assign\/view\.php/i.test(href)) {
+      // normalisasi: buang hash / param sesi yang bikin duplikat
+      try {
+        const u = new URL(href);
+        u.hash = '';
+        u.searchParams.delete('sesskey');
+        assignHrefs.add(u.toString());
+      } catch {
+        assignHrefs.add(href);
+      }
+    }
+  }
 
   // Kalender upcoming (sering berisi deadline tugas)
   try {
@@ -570,6 +585,7 @@ async function scrapeElearning(page, env, context) {
       if (courseData.items.length) {
         combinedText += `Items:\n`;
         for (const it of courseData.items) {
+          noteAssignHref(it.href);
           combinedText += `- ITEM_JSON:${JSON.stringify(it)}\n`;
         }
       }
@@ -653,6 +669,7 @@ async function scrapeElearning(page, env, context) {
           if (secData.length) {
             combinedText += `\n=== SECTION: ${sec.name} @ ${course.title} ===\nItems:\n`;
             for (const it of secData) {
+              noteAssignHref(it.href);
               combinedText += `- ITEM_JSON:${JSON.stringify(it)}\n`;
             }
           }
@@ -666,42 +683,23 @@ async function scrapeElearning(page, env, context) {
   }
 
   // Kunjungi halaman tugas (/mod/assign/view.php) untuk Opened/Due + .activity-description
-  const assignHrefs = new Map();
-  const assignUrlRe = /"href"\s*:\s*"(https?:[^"]*\/mod\/assign\/view\.php[^"]*)"/gi;
-  let m;
-  while ((m = assignUrlRe.exec(combinedText)) !== null) {
-    try {
-      const href = m[1].replace(/\\u0026/g, '&').replace(/\\\//g, '/');
-      if (!assignHrefs.has(href)) assignHrefs.set(href, true);
-    } catch {
-      /* ignore */
-    }
-  }
-  // Juga tangkap dari item yang sudah di-track via type tugas di JSON id
-  const idHrefRe =
-    /ITEM_JSON:(\{(?:[^{}]|"[^"]*")*"type"\s*:\s*"tugas"(?:[^{}]|"[^"]*")*\})/gi;
-  while ((m = idHrefRe.exec(combinedText)) !== null) {
-    try {
-      const obj = JSON.parse(m[1]);
-      if (obj.href && /\/mod\/assign\/view\.php/i.test(obj.href)) {
-        assignHrefs.set(obj.href, true);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-
-  const maxAssigns = Number(env.ELEARNING_MAX_ASSIGNS || 25);
-  const assignList = [...assignHrefs.keys()].slice(0, maxAssigns);
+  const maxAssigns = Number(env.ELEARNING_MAX_ASSIGNS || 15);
+  const assignTimeout = Math.min(Number(env.ELEARNING_ASSIGN_TIMEOUT || 20000), timeout);
+  const assignList = [...assignHrefs].slice(0, maxAssigns);
   if (assignList.length) {
-    console.log(`[scrape] ${assignList.length} halaman tugas akan dibuka untuk tanggal buka/tutup...`);
+    console.log(
+      `[scrape] ${assignList.length} halaman tugas akan dibuka untuk tanggal buka/tutup (timeout ${assignTimeout}ms)...`
+    );
   }
 
   for (const href of assignList) {
     try {
       console.log(`[scrape]   ↳ assign: ${href}`);
-      await workPage.goto(href, { waitUntil: 'domcontentloaded', timeout });
-      await workPage.waitForTimeout(500);
+      await workPage.goto(href, {
+        waitUntil: 'domcontentloaded',
+        timeout: assignTimeout,
+      });
+      await workPage.waitForTimeout(300);
       const detail = await workPage.evaluate(() => {
         const descNode = document.querySelector(
           '#region-main .activity-description, .activity-description, [data-region="activity-description"]'
@@ -758,6 +756,9 @@ async function scrapeElearning(page, env, context) {
       });
 
       combinedText += `\n=== ASSIGN_DETAIL: __ASSIGN__ ===\n- ITEM_JSON:${JSON.stringify(detail)}\n`;
+      console.log(
+        `[scrape]     opened=${detail.opened || '-'} | due=${detail.due || '-'}`
+      );
     } catch (err) {
       console.warn(`[scrape]   assign gagal (${href}): ${err.message}`);
     }

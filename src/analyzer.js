@@ -118,6 +118,11 @@ function isNoiseItem(type, title, url, desc) {
   const lower = t.toLowerCase();
   const d = String(desc || '').trim();
 
+  // Section bernama (bukan "new section") selalu relevan
+  if (type === 'section') {
+    return /^(new section|jump to|main course|general)$/i.test(t);
+  }
+
   // Label tanpa deskripsi diabaikan; label berdeskripsi = info pengumuman
   if (type === 'label' && d.length < 20) return true;
   if (type === 'aktivitas' && d.length < 20) return true;
@@ -185,7 +190,16 @@ function extractAssignments(scrapedText) {
       if (isNoiseItem(type, item.title, item.url, desc)) continue;
       if (/^new section$/i.test(item.title)) continue;
 
-      const allowed = ['tugas', 'kuis', 'file', 'forum', 'link', 'halaman', 'label'];
+      const allowed = [
+        'tugas',
+        'kuis',
+        'file',
+        'forum',
+        'link',
+        'halaman',
+        'label',
+        'section',
+      ];
       if (!allowed.includes(type)) continue;
 
       tasks.push(
@@ -199,7 +213,10 @@ function extractAssignments(scrapedText) {
           opened: item.opened || '',
           due: item.due || '',
           tipe: type === 'label' ? 'label' : type,
-          section: String(item.section || '').slice(0, 200),
+          section:
+            type === 'section'
+              ? String(item.title || item.section || '').slice(0, 200)
+              : String(item.section || '').slice(0, 200),
           deskripsi: desc.slice(0, 500),
         })
       );

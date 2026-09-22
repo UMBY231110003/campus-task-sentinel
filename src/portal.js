@@ -535,42 +535,89 @@ async function scrapeElearning(page, env, context) {
           items.push({ id, type, title, href, section, desc });
         });
 
-        const sections = Array.from(
-          document.querySelectorAll(
-            'h3.sectionname a[href*="/course/section.php"], a[href*="/course/section.php"], li.course-section[data-sectionname], option[value*="/course/section.php"]'
-          )
-        )
-          .map((el) => {
-            if (el.tagName === 'OPTION') {
-              return {
-                name: (el.textContent || '').trim(),
-                href: el.value ? new URL(el.value, location.origin).href : '',
-              };
-            }
-            if (el.tagName === 'A') {
-              return {
-                name: (el.textContent || '').replace(/\s+/g, ' ').trim(),
-                href: el.href || '',
-              };
-            }
-            return {
-              name:
-                el.getAttribute('data-sectionname') ||
-                (el.textContent || '').trim(),
-              href: el.querySelector?.('a')?.href || '',
-            };
-          })
-          .filter((s) => s.name && !/^new section$|^jump to|^main course|^general$/i.test(s.name))
-          .slice(0, 30);
-
-        // dedupe sections by href/name
+        const sections = [];
         const secSeen = new Set();
-        const uniqueSections = sections.filter((s) => {
-          const k = s.href || s.name;
-          if (secSeen.has(k)) return false;
-          secSeen.add(k);
-          return true;
-        });
+
+        function pushSection(name, href, id) {
+          const cleanName = String(name || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (
+            !cleanName ||
+            /^new section$|^jump to|^main course|^general$/i.test(cleanName)
+          ) {
+            return;
+          }
+          let cleanHref = href || '';
+          try {
+            if (cleanHref) cleanHref = new URL(cleanHref, location.origin).href;
+          } catch {
+            /* ignore */
+          }
+          const secId =
+            String(id || '').trim() ||
+            (cleanHref.match(/[?&]id=(\d+)/i) || [])[1] ||
+            '';
+          const key = secId || cleanHref || cleanName.toLowerCase();
+          if (secSeen.has(key)) return;
+          secSeen.add(key);
+          sections.push({
+            id: secId,
+            name: cleanName,
+            href: cleanHref,
+          });
+        }
+
+        // Struktur Moodle modern: .section-item / course-section-header
+        document
+          .querySelectorAll(
+            '.section-item, li.section, li.course-section, [data-for="section_title"]'
+          )
+          .forEach((el) => {
+            const header =
+              el.matches?.('[data-for="section_title"]') && el.tagName !== 'H3'
+                ? el
+                : el.querySelector?.(
+                    '.course-section-header[data-for="section_title"], [data-for="section_title"]'
+                  ) || el;
+            const name =
+              header.getAttribute?.('data-sectionname') ||
+              el.getAttribute?.('data-sectionname') ||
+              el.querySelector?.(
+                'h3.sectionname a, h3.sectionname, .sectionname a, .sectionname'
+              )?.textContent ||
+              header.querySelector?.(
+                'h3.sectionname a, a[href*="/course/section.php"]'
+              )?.textContent ||
+              header.getAttribute?.('aria-label') ||
+              '';
+            const href =
+              el.querySelector?.('h3.sectionname a, a[href*="/course/section.php"]')
+                ?.href ||
+              header.querySelector?.('a[href*="/course/section.php"]')?.href ||
+              '';
+            const id =
+              header.getAttribute?.('data-id') ||
+              el.getAttribute?.('data-id') ||
+              el.querySelector?.('[data-id]')?.getAttribute('data-id') ||
+              '';
+            pushSection(name, href, id);
+          });
+
+        // Fallback: link / option section.php
+        document
+          .querySelectorAll(
+            'h3.sectionname a[href*="/course/section.php"], a[href*="/course/section.php"], option[value*="/course/section.php"]'
+          )
+          .forEach((el) => {
+            if (el.tagName === 'OPTION') {
+              pushSection(el.textContent, el.value, '');
+            } else {
+              pushSection(el.textContent, el.href, '');
+            }
+          });
+
+        const uniqueSections = sections.slice(0, 40);
 
         return {
           title: document.title,
@@ -591,8 +638,18 @@ async function scrapeElearning(page, env, context) {
       }
       if (courseData.sections.length) {
         combinedText += `Sections:\n`;
-        for (const s of courseData.sections.slice(0, 20)) {
-          combinedText += `- SECTION|name=${s.name}|url=${s.href}\n`;
+        for (const s of courseData.sections.slice(0, 30)) {
+          // Item khusus: section bernama (bukan "new section") ikut notifikasi
+          // meski belum ada aktivitas di dalamnya.
+          combinedText += `- ITEM_JSON:${JSON.stringify({
+            id: s.id || '',
+            type: 'section',
+            title: s.name,
+            href: s.href || '',
+            section: s.name,
+            desc: '',
+          })}\n`;
+          combinedText += `- SECTION|name=${s.name}|url=${s.href || ''}|id=${s.id || ''}\n`;
         }
       }
       combinedText += `\n${courseData.text.slice(0, 6000)}`;

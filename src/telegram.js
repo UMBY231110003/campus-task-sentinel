@@ -21,6 +21,7 @@ function typeIcon(tipe) {
       link: '🔗',
       halaman: '📃',
       label: 'ℹ️',
+      section: '📅',
     }[tipe] || '•'
   );
 }
@@ -49,6 +50,8 @@ function formatMatkulMessage(matkul, items) {
       if (titleSameAsSection) {
         if (rawDesc) {
           lines.push(escapeHtml(rawDesc));
+        } else if (t.tipe === 'section') {
+          lines.push('📅 Pertemuan / jadwal baru');
         }
         continue;
       }

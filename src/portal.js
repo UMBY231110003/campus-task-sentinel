@@ -665,6 +665,104 @@ async function scrapeElearning(page, env, context) {
     }
   }
 
+  // Kunjungi halaman tugas (/mod/assign/view.php) untuk Opened/Due + .activity-description
+  const assignHrefs = new Map();
+  const assignUrlRe = /"href"\s*:\s*"(https?:[^"]*\/mod\/assign\/view\.php[^"]*)"/gi;
+  let m;
+  while ((m = assignUrlRe.exec(combinedText)) !== null) {
+    try {
+      const href = m[1].replace(/\\u0026/g, '&').replace(/\\\//g, '/');
+      if (!assignHrefs.has(href)) assignHrefs.set(href, true);
+    } catch {
+      /* ignore */
+    }
+  }
+  // Juga tangkap dari item yang sudah di-track via type tugas di JSON id
+  const idHrefRe =
+    /ITEM_JSON:(\{(?:[^{}]|"[^"]*")*"type"\s*:\s*"tugas"(?:[^{}]|"[^"]*")*\})/gi;
+  while ((m = idHrefRe.exec(combinedText)) !== null) {
+    try {
+      const obj = JSON.parse(m[1]);
+      if (obj.href && /\/mod\/assign\/view\.php/i.test(obj.href)) {
+        assignHrefs.set(obj.href, true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const maxAssigns = Number(env.ELEARNING_MAX_ASSIGNS || 25);
+  const assignList = [...assignHrefs.keys()].slice(0, maxAssigns);
+  if (assignList.length) {
+    console.log(`[scrape] ${assignList.length} halaman tugas akan dibuka untuk tanggal buka/tutup...`);
+  }
+
+  for (const href of assignList) {
+    try {
+      console.log(`[scrape]   ↳ assign: ${href}`);
+      await workPage.goto(href, { waitUntil: 'domcontentloaded', timeout });
+      await workPage.waitForTimeout(500);
+      const detail = await workPage.evaluate(() => {
+        const descNode = document.querySelector(
+          '#region-main .activity-description, .activity-description, [data-region="activity-description"]'
+        );
+        const descRaw = String(descNode?.innerText || '');
+        const desc = descRaw.replace(/\s+/g, ' ').trim().slice(0, 800);
+
+        // Moodle: tanggal di .activity-dates; fallback region-main (pertahankan newline)
+        const datesRoot =
+          document.querySelector(
+            '#region-main .activity-dates, .activity-dates, .assignment-status'
+          ) || document.querySelector('#region-main') || document.body;
+        const datesText = String(datesRoot.innerText || '').slice(0, 4000);
+
+        function pickDate(labels) {
+          for (const label of labels) {
+            const re = new RegExp(`${label}\\s*:\\s*([^\\n\\r]+)`, 'i');
+            const hit = datesText.match(re) || descRaw.match(re);
+            if (hit) {
+              return String(hit[1] || '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .slice(0, 120);
+            }
+          }
+          return '';
+        }
+
+        const opened = pickDate([
+          'Opened',
+          'Dibuka',
+          'Allow submissions from',
+          'Mulai',
+        ]);
+        const due = pickDate([
+          'Due date',
+          'Due',
+          'Ditutup',
+          'Tenggat',
+          'Cutoff date',
+          'Cutoff',
+        ]);
+
+        const idMatch = location.href.match(/[?&]id=(\d+)/i);
+        return {
+          id: idMatch ? idMatch[1] : '',
+          href: location.href,
+          type: 'tugas',
+          desc,
+          opened,
+          due,
+          deadline: due || '',
+        };
+      });
+
+      combinedText += `\n=== ASSIGN_DETAIL: __ASSIGN__ ===\n- ITEM_JSON:${JSON.stringify(detail)}\n`;
+    } catch (err) {
+      console.warn(`[scrape]   assign gagal (${href}): ${err.message}`);
+    }
+  }
+
   console.log(`[scrape] Total teks dikumpulkan: ${combinedText.length} karakter`);
 
   if (combinedText.length < 80) {

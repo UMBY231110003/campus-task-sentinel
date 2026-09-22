@@ -54,7 +54,9 @@ function formatMatkulMessage(matkul, items) {
       }
 
       const title = escapeHtml(rawTitle);
-      const deadline = t.deadline ? ` · ${escapeHtml(t.deadline)}` : '';
+      const hasOpenDue = Boolean(t.opened || t.due);
+      const deadline =
+        !hasOpenDue && t.deadline ? ` · ${escapeHtml(t.deadline)}` : '';
 
       if (t.tipe === 'forum') {
         lines.push(title + deadline);
@@ -62,8 +64,23 @@ function formatMatkulMessage(matkul, items) {
         lines.push(`${typeIcon(t.tipe)} ${title}${deadline}`);
       }
 
+      if (t.opened) {
+        lines.push(`🔓 Opened: ${escapeHtml(t.opened)}`);
+      }
+      if (t.due) {
+        lines.push(`🔒 Due: ${escapeHtml(t.due)}`);
+      }
+
       if (rawDesc && rawDesc.localeCompare(rawTitle, undefined, { sensitivity: 'accent' }) !== 0) {
-        lines.push(`<i>${escapeHtml(rawDesc)}</i>`);
+        // Jangan ulang baris Opened/Due yang sudah ditampilkan terstruktur
+        const descClean = rawDesc
+          .replace(/^\s*Opened\s*:[^\n]*/im, '')
+          .replace(/^\s*Due(?:\s*date)?\s*:[^\n]*/im, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (descClean) {
+          lines.push(`<i>${escapeHtml(descClean)}</i>`);
+        }
       }
     }
   }

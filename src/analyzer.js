@@ -37,7 +37,9 @@ function normalizeTask(item) {
   if (!item || typeof item !== 'object') return null;
   const matkul = String(item.matkul || '').trim();
   const judul = String(item.judul_tugas || item.judul || '').trim();
-  const deadline = String(item.deadline || '').trim();
+  const opened = String(item.opened || '').trim();
+  const due = String(item.due || item.deadline || '').trim();
+  const deadline = due || String(item.deadline || '').trim();
   const deskripsi = String(item.deskripsi || '').trim();
   const section = String(item.section || '').trim();
   const tipe = String(item.tipe || 'aktivitas').trim();
@@ -56,6 +58,8 @@ function normalizeTask(item) {
     matkul,
     judul_tugas: judul,
     deadline,
+    opened,
+    due,
     deskripsi,
     section,
     tipe,
@@ -75,6 +79,9 @@ function parseItemLine(line) {
         title: obj.title,
         url: obj.href || obj.url,
         desc: obj.desc || obj.description || '',
+        opened: obj.opened || '',
+        due: obj.due || '',
+        deadline: obj.deadline || obj.due || '',
       };
     } catch {
       return null;
@@ -136,21 +143,23 @@ function isNoiseItem(type, title, url, desc) {
 
 function extractAssignments(scrapedText) {
   const tasks = [];
+  const assignDetails = new Map(); // modId -> { opened, due, desc }
   const text = String(scrapedText);
 
-  const blocks = text.split(/===\s*(?:COURSE|SECTION):\s*/i);
+  const blocks = text.split(/===\s*(?:COURSE|SECTION|ASSIGN_DETAIL):\s*/i);
   for (const block of blocks) {
     if (!block.trim()) continue;
 
     const headerMatch = block.match(/^([^\n=]+)/);
     let matkul = (headerMatch ? headerMatch[1] : 'Unknown').replace(/\s+/g, ' ').trim();
+    const isAssignDetail = /^__ASSIGN__/i.test(matkul);
+
     if (/\s@\s/.test(matkul)) {
       matkul = matkul.split(/\s@\s/).pop().trim();
     }
     matkul = matkul.slice(0, 120);
     if (/^DASHBOARD|^CALENDAR/i.test(matkul)) continue;
 
-    // Ambil baris ITEM (JSON bisa panjang satu baris)
     const lines = block.split(/\n/).map((l) => l.trim()).filter(Boolean);
 
     for (const line of lines) {
@@ -158,6 +167,20 @@ function extractAssignments(scrapedText) {
       if (!item) continue;
 
       const type = (item.type || 'aktivitas').toLowerCase();
+      const modId = extractMoodleModId(item.url, item.id);
+
+      // Detail dari halaman /mod/assign/view.php → simpan untuk merge
+      if (isAssignDetail) {
+        if (modId) {
+          assignDetails.set(modId, {
+            opened: String(item.opened || '').trim(),
+            due: String(item.due || item.deadline || '').trim(),
+            desc: String(item.desc || '').trim(),
+          });
+        }
+        continue;
+      }
+
       const desc = String(item.desc || '').trim();
       if (isNoiseItem(type, item.title, item.url, desc)) continue;
       if (/^new section$/i.test(item.title)) continue;
@@ -172,12 +195,34 @@ function extractAssignments(scrapedText) {
           href: item.href || item.url,
           matkul,
           judul_tugas: String(item.title).slice(0, 160),
-          deadline: '',
+          deadline: item.deadline || item.due || '',
+          opened: item.opened || '',
+          due: item.due || '',
           tipe: type === 'label' ? 'label' : type,
           section: String(item.section || '').slice(0, 200),
           deskripsi: desc.slice(0, 500),
         })
       );
+    }
+  }
+
+  // Merge tanggal/deskripsi dari halaman assign
+  for (const t of tasks) {
+    if (t.tipe !== 'tugas') continue;
+    const modId = (t.id.match(/_(\d+)$/) || [])[1] || '';
+    const detail = modId ? assignDetails.get(modId) : null;
+    if (!detail) continue;
+    if (detail.opened) t.opened = detail.opened;
+    if (detail.due) {
+      t.due = detail.due;
+      t.deadline = detail.due;
+    }
+    // Deskripsi dari halaman assign lebih lengkap; jangan timpa jika sama dengan judul
+    if (
+      detail.desc &&
+      detail.desc.localeCompare(t.judul_tugas, undefined, { sensitivity: 'accent' }) !== 0
+    ) {
+      t.deskripsi = detail.desc.slice(0, 500);
     }
   }
 

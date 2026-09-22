@@ -64,8 +64,10 @@ async function main() {
 
     console.log(`[main] ${newTasks.length} new assignment(s) found.`);
 
-    await sendTelegramUpdates(env, newTasks);
+    // Simpan ID dulu agar run berikutnya tidak spam jika Telegram/network gagal di tengah.
+    // Lebih baik miss 1 notifikasi daripada pesan berulang.
     await appendTaskIds(env, newTasks);
+    await sendTelegramUpdates(env, newTasks);
 
     console.log('[main] Completed successfully.');
   } catch (err) {

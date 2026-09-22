@@ -504,8 +504,11 @@ async function scrapeElearning(page, env, context) {
           if (!title && desc) title = desc.slice(0, 80) + (desc.length > 80 ? '…' : '');
           if (!title || title.length < 2) return;
 
-          const id = el.getAttribute('data-id') || '';
           const href = el.querySelector('a.aalink, a[href*="/mod/"]')?.href || '';
+          const id =
+            el.getAttribute('data-id') ||
+            (href.match(/[?&](?:id|cmid)=(\d+)/i) || [])[1] ||
+            '';
           const type = activityType(el);
           const section = readSectionName(el);
 
@@ -631,8 +634,12 @@ async function scrapeElearning(page, env, context) {
               if (!title) return;
 
               const href = el.querySelector('a.aalink, a[href*="/mod/"]')?.href || '';
+              const id =
+                el.getAttribute('data-id') ||
+                (href.match(/[?&](?:id|cmid)=(\d+)/i) || [])[1] ||
+                '';
               items.push({
-                id: el.getAttribute('data-id') || '',
+                id,
                 type: activityType(el),
                 title,
                 href,

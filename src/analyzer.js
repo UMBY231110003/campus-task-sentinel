@@ -3,6 +3,36 @@
  * Filter ketat: abaikan UI noise, forum default, kalender kosong.
  */
 
+/** Ambil course-module id Moodle dari data-id atau query ?id= / ?cmid= */
+function extractMoodleModId(urlOrId, dataId) {
+  const raw = String(dataId || '').trim();
+  if (/^\d+$/.test(raw)) return raw;
+  const s = String(urlOrId || '');
+  const m = s.match(/[?&](?:id|cmid)=(\d+)/i);
+  return m ? m[1] : '';
+}
+
+function sanitizeIdPart(value) {
+  return String(value || '')
+    .replace(/\s+/g, '_')
+    .replace(/[^A-Za-z0-9_\-]/g, '')
+    .slice(0, 120);
+}
+
+/**
+ * ID harus stabil antar scrape (course vs section, data-id ada/tidak).
+ * Prioritas: Moodle module id → fallback matkul+tipe+judul.
+ */
+function buildStableTaskId(matkul, tipe, item) {
+  const modId = extractMoodleModId(item.url || item.href || item.id, item.id);
+  if (modId) {
+    // Format kompatibel dengan ID lama: matkul_tipe_moduleId
+    return sanitizeIdPart(`${matkul}_${tipe}_${modId}`).slice(0, 200);
+  }
+  const judul = String(item.judul_tugas || item.judul || item.title || '').trim();
+  return sanitizeIdPart([matkul, tipe, judul].filter(Boolean).join('_')).slice(0, 200);
+}
+
 function normalizeTask(item) {
   if (!item || typeof item !== 'object') return null;
   const matkul = String(item.matkul || '').trim();
@@ -13,14 +43,13 @@ function normalizeTask(item) {
   const tipe = String(item.tipe || 'aktivitas').trim();
   if (!matkul && !judul) return null;
 
-  let id = String(item.id || '').trim();
-  if (!id) {
-    id = [matkul, tipe, judul, deadline].filter(Boolean).join('_');
-  }
-  id = id
-    .replace(/\s+/g, '_')
-    .replace(/[^A-Za-z0-9_\-]/g, '')
-    .slice(0, 200);
+  const id = buildStableTaskId(matkul, tipe, {
+    id: item.id,
+    url: item.url || item.href,
+    href: item.href,
+    judul_tugas: judul,
+    title: judul,
+  });
 
   return {
     id,
@@ -136,13 +165,11 @@ function extractAssignments(scrapedText) {
       const allowed = ['tugas', 'kuis', 'file', 'forum', 'link', 'halaman', 'label'];
       if (!allowed.includes(type)) continue;
 
-      const stableId = item.id
-        ? `${matkul}_${type}_${item.id}`
-        : `${matkul}_${type}_${item.title}`;
-
       tasks.push(
         normalizeTask({
-          id: stableId,
+          id: item.id,
+          url: item.url || item.href,
+          href: item.href || item.url,
           matkul,
           judul_tugas: String(item.title).slice(0, 160),
           deadline: '',
@@ -156,8 +183,11 @@ function extractAssignments(scrapedText) {
 
   const seen = new Set();
   return tasks.filter((t) => {
-    if (!t || seen.has(t.id)) return false;
+    if (!t) return false;
+    const fp = `${t.matkul}|${t.judul_tugas}|${t.tipe}`.toLowerCase();
+    if (seen.has(t.id) || seen.has(fp)) return false;
     seen.add(t.id);
+    seen.add(fp);
     return true;
   });
 }
@@ -174,4 +204,6 @@ module.exports = {
   normalizeTask,
   isNoiseItem,
   typeLabel,
+  extractMoodleModId,
+  buildStableTaskId,
 };

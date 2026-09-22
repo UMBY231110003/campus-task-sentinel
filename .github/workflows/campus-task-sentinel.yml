@@ -7,6 +7,10 @@ on:
     - cron: '0 */2 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: campus-task-sentinel
+  cancel-in-progress: false
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest

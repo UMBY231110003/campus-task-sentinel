@@ -30,14 +30,6 @@ function fingerprintOf(matkul, judul) {
     .toLowerCase()}`;
 }
 
-/** Judul saja — tahan kalau nama matkul digeser sedikit */
-function titleFingerprint(judul) {
-  return String(judul || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-}
-
 /**
  * Baca histori dari A:C, plus E:G (bekas append yang salah kolom).
  */
@@ -64,8 +56,6 @@ async function getKnownTaskIds(env) {
   const addFp = (matkul, judul) => {
     const fp = fingerprintOf(matkul, judul);
     if (fp !== '|') fingerprints.add(fp);
-    const tf = titleFingerprint(judul);
-    if (tf) fingerprints.add(`title:${tf}`);
   };
 
   for (const row of rows) {
@@ -85,31 +75,62 @@ async function getKnownTaskIds(env) {
 }
 
 /**
- * Filter hanya tugas yang belum pernah dikirim (by id / fingerprint / judul).
+ * Filter hanya tugas yang belum pernah dikirim.
+ * Hanya by: id eksak, moodle module id, atau fingerprint matkul|judul.
+ * (Jangan pakai judul saja — "PENGUMUMAN"/"Pertemuan 1" bisa bentrok antar matkul.)
  */
 function filterNewTasks(tasks, known) {
   const knownIds = known?.ids instanceof Set ? known.ids : known;
   const knownFp =
     known?.fingerprints instanceof Set ? known.fingerprints : new Set();
 
-  return tasks.filter((t) => {
-    if (!t?.id) return false;
-    if (knownIds.has(t.id)) return false;
+  // Index module-id → known (O(n) sekali)
+  const knownModIds = new Set();
+  for (const k of knownIds) {
+    const m = String(k).match(/_(\d{5,})$/);
+    if (m) knownModIds.add(m[1]);
+  }
 
-    // Moodle module id di akhir ID: Matkul_tipe_12345
+  const neu = [];
+  let skipId = 0;
+  let skipMod = 0;
+  let skipFp = 0;
+
+  for (const t of tasks) {
+    if (!t?.id) continue;
+    if (knownIds.has(t.id)) {
+      skipId += 1;
+      continue;
+    }
+
     const modId = (String(t.id).match(/_(\d{5,})$/) || [])[1];
-    if (modId && [...knownIds].some((k) => String(k).endsWith(`_${modId}`))) {
-      return false;
+    if (modId && knownModIds.has(modId)) {
+      skipMod += 1;
+      continue;
     }
 
     const fp = fingerprintOf(t.matkul, t.judul_tugas);
-    if (fp !== '|' && knownFp.has(fp)) return false;
+    if (fp !== '|' && knownFp.has(fp)) {
+      skipFp += 1;
+      continue;
+    }
 
-    const tf = titleFingerprint(t.judul_tugas);
-    if (tf && knownFp.has(`title:${tf}`)) return false;
+    neu.push(t);
+  }
 
-    return true;
-  });
+  console.log(
+    `[sheets] Filter: ${neu.length} baru | skip id=${skipId} mod=${skipMod} fp=${skipFp}`
+  );
+  if (neu.length) {
+    console.log(
+      `[sheets] Baru: ${neu
+        .slice(0, 12)
+        .map((t) => `${t.matkul} › ${t.judul_tugas}`)
+        .join(' || ')}`
+    );
+  }
+
+  return neu;
 }
 
 /**

@@ -54,6 +54,13 @@ async function main() {
       return;
     }
 
+    console.log(
+      `[main] Sample items: ${tasks
+        .slice(0, 8)
+        .map((t) => `${t.tipe}:${t.judul_tugas}`)
+        .join(' | ')}`
+    );
+
     const knownIds = await getKnownTaskIds(env);
     const newTasks = filterNewTasks(tasks, knownIds);
 

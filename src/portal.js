@@ -462,6 +462,30 @@ async function scrapeElearning(page, env, context) {
       await workPage.goto(course.href, { waitUntil: 'domcontentloaded', timeout });
       await workPage.waitForTimeout(800);
 
+      // Buka section yang collapsed agar aktivitas di dalamnya ikut ke DOM
+      try {
+        await workPage.evaluate(() => {
+          const expandAll = document.querySelector(
+            'a[data-toggle="collapse"][href="#collapsesections"], [data-action="togglecoursecontentsection"][aria-expanded="false"], .collapse_all, #collapsesections'
+          );
+          if (expandAll) expandAll.click();
+          document
+            .querySelectorAll(
+              'a[data-for="sectiontoggler"][aria-expanded="false"], .icons-collapse-expand[aria-expanded="false"]'
+            )
+            .forEach((a) => {
+              try {
+                a.click();
+              } catch {
+                /* ignore */
+              }
+            });
+        });
+        await workPage.waitForTimeout(600);
+      } catch {
+        /* optional */
+      }
+
       const courseData = await workPage.evaluate(() => {
         const main =
           document.querySelector('#region-main, #page-content, .course-content') ||
@@ -656,7 +680,9 @@ async function scrapeElearning(page, env, context) {
 
       const sectionLinks = courseData.sections
         .filter((s) => s.href && /section\.php/i.test(s.href))
-        .slice(0, Number(env.ELEARNING_MAX_SECTIONS || 8));
+        // prioritaskan section dengan nomor/id lebih besar (biasanya lebih baru)
+        .sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
+        .slice(0, Number(env.ELEARNING_MAX_SECTIONS || 15));
 
       for (const sec of sectionLinks) {
         try {

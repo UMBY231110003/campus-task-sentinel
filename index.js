@@ -85,6 +85,9 @@ async function main() {
     if (browser) {
       await browser.close().catch(() => {});
     }
+    if (process.exitCode && process.exitCode !== 0) {
+      process.exit(process.exitCode);
+    }
   }
 }
 

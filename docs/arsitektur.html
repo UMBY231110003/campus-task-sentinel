@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Task Sentinel · Arsitektur</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1280px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 900px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Arsitektur · Campus Task Sentinel</p>
+    <h1>Monitor tugas kampus otomatis</h1>
+
+    <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="arsitektur-title arsitektur-desc">
+      <title id="arsitektur-title">Campus Task Sentinel — arsitektur</title>
+      <desc id="arsitektur-desc">Diagram arsitektur: GitHub Actions memicu orkestrator Node.js yang login portal via Playwright dan Gmail, scrape e-learning, parse tugas, deduplikasi di Sheets, lalu kirim alert Telegram.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+        <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+      <!-- Zones: bg → zones → arrows → nodes -->
+      <rect x="24" y="248" width="160" height="128" rx="8"
+            fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <rect x="52" y="252" width="104" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="104" y="261" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">PENJADWAL</text>
+
+      <rect x="196" y="248" width="588" height="128" rx="8"
+            fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <rect x="432" y="252" width="116" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="490" y="261" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">BOT NODE.JS</text>
+
+      <rect x="796" y="248" width="444" height="128" rx="8"
+            fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <rect x="968" y="252" width="100" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="1018" y="261" fill="rgba(45,49,66,0.40)" font-size="7" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">INTEGRASI</text>
+
+      <!-- Arrows -->
+      <line x1="168" y1="312" x2="208" y2="312" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="368" y1="312" x2="408" y2="312" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <line x1="568" y1="312" x2="608" y2="312" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <line x1="768" y1="312" x2="808" y2="312" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <line x1="968" y1="312" x2="1008" y2="312" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+      <!-- Portal top center (488) → E-Learning bottom (160) -->
+      <path d="M 488,280 V 168" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <!-- Portal bottom → Gmail top (dashed) -->
+      <path d="M 488,344 V 456" fill="none" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- Arrow labels — 6–10px gap above stroke -->
+      <rect x="172" y="292" width="32" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="188" y="301" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">CRON</text>
+
+      <rect x="368" y="292" width="40" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="388" y="301" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">LOGIN</text>
+
+      <rect x="568" y="292" width="40" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="588" y="301" fill="#eb6c36" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">PARSE</text>
+
+      <rect x="772" y="292" width="48" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="796" y="301" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">DEDUPE</text>
+
+      <rect x="972" y="292" width="40" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="992" y="301" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">KIRIM</text>
+
+      <!-- Vertical labels to the side (6–10px gap) -->
+      <rect x="500" y="208" width="52" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="526" y="217" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">SCRAPE</text>
+
+      <rect x="500" y="392" width="72" height="12" rx="2" fill="#f5f5f5"/>
+      <text x="536" y="401" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.06em">MAGIC LINK</text>
+
+      <!-- Nodes -->
+      <!-- GitHub Actions -->
+      <rect x="40" y="280" width="128" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="40" y="280" width="128" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+      <rect x="48" y="288" width="36" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+      <text x="66" y="297" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CRON</text>
+      <text x="104" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">GitHub Actions</text>
+      <text x="104" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">tiap 2 jam</text>
+
+      <!-- Orkestrator (focal) -->
+      <rect x="208" y="280" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="208" y="280" width="160" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <rect x="216" y="288" width="36" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+      <text x="234" y="297" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">CORE</text>
+      <text x="288" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Orkestrator</text>
+      <text x="288" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">index.js</text>
+
+      <!-- Portal -->
+      <rect x="408" y="280" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="408" y="280" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="416" y="288" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="432" y="297" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SCR</text>
+      <text x="488" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Portal</text>
+      <text x="488" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">portal.js · PW</text>
+
+      <!-- Analyzer -->
+      <rect x="608" y="280" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="608" y="280" width="160" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <rect x="616" y="288" width="40" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.40)" stroke-width="0.8"/>
+      <text x="636" y="297" fill="#2d3142" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">PARSE</text>
+      <text x="688" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Analyzer</text>
+      <text x="688" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">analyzer.js</text>
+
+      <!-- Google Sheets (focal store) -->
+      <rect x="808" y="280" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="808" y="280" width="160" height="64" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <rect x="816" y="288" width="40" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+      <text x="836" y="297" fill="#eb6c36" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">STORE</text>
+      <text x="888" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Google Sheets</text>
+      <text x="888" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">deduplikasi</text>
+
+      <!-- Telegram -->
+      <rect x="1008" y="280" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="1008" y="280" width="160" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+      <rect x="1016" y="288" width="32" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.22)" stroke-width="0.8"/>
+      <text x="1032" y="297" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+      <text x="1088" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Telegram</text>
+      <text x="1088" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">notifikasi</text>
+
+      <!-- E-Learning -->
+      <rect x="408" y="96" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="408" y="96" width="160" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+      <rect x="416" y="104" width="28" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+      <text x="430" y="113" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">EXT</text>
+      <text x="488" y="132" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">E-Learning</text>
+      <text x="488" y="148" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">portal kampus</text>
+
+      <!-- Gmail (optional) -->
+      <rect x="408" y="464" width="160" height="64" rx="6" fill="#f5f5f5"/>
+      <rect x="408" y="464" width="160" height="64" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+      <rect x="416" y="472" width="28" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.25)" stroke-width="0.8"/>
+      <text x="430" y="481" fill="#7a8399" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">API</text>
+      <text x="488" y="500" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Gmail</text>
+      <text x="488" y="516" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gmail.js · OTP</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="580" x2="1240" y2="580" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+      <text x="40" y="600" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGENDA</text>
+
+      <rect x="40" y="616" width="14" height="10" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+      <text x="60" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Fokus / inti</text>
+
+      <rect x="168" y="616" width="14" height="10" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+      <text x="188" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Modul bot</text>
+
+      <rect x="288" y="616" width="14" height="10" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+      <text x="308" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Cloud / API</text>
+
+      <rect x="416" y="616" width="14" height="10" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+      <text x="436" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Eksternal</text>
+
+      <rect x="532" y="616" width="14" height="10" rx="2" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="552" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Opsional</text>
+
+      <line x1="648" y1="622" x2="676" y2="622" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="684" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Alur utama</text>
+
+      <line x1="784" y1="622" x2="812" y2="622" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+      <text x="820" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">HTTP / API</text>
+
+      <line x1="920" y1="622" x2="948" y2="622" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="956" y="624" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif">Opsional / async</text>
+    </svg>
+  </div>
+</body>
+</html>

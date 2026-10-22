@@ -152,112 +152,183 @@ async function tryReuseSession(env) {
   }
 }
 
+async function dismissAnnouncements(page) {
+  try {
+    await page.waitForTimeout(500);
+
+    const closeBtn = page
+      .locator(
+        'button:has-text("Tutup"), button[\\@click*="newsShowOpen"], button[x-on\\:click*="newsShowOpen"], [x-show="newsShowOpen"] button'
+      )
+      .first();
+
+    if ((await closeBtn.count()) > 0 && (await closeBtn.isVisible().catch(() => false))) {
+      console.log('[portal] Menutup popup pengumuman/berita SSO...');
+      await closeBtn.click({ force: true }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+
+    await page
+      .evaluate(() => {
+        try {
+          const elWithAlpine = document.querySelector('[x-data]');
+          if (elWithAlpine && window.Alpine) {
+            const data = window.Alpine.$data(elWithAlpine);
+            if (data && 'newsShowOpen' in data) {
+              data.newsShowOpen = false;
+            }
+          }
+        } catch {}
+
+        document
+          .querySelectorAll('[x-show="newsShowOpen"], .loader-spinner, div[x-trap\\.inert\\.noscroll]')
+          .forEach((el) => {
+            el.style.display = 'none';
+            el.setAttribute('aria-hidden', 'true');
+          });
+
+        document.querySelectorAll('div.fixed.inset-0, div.fixed.left-0.top-0').forEach((el) => {
+          if (!el.querySelector('input[name="username"]')) {
+            el.style.display = 'none';
+            el.style.pointerEvents = 'none';
+          }
+        });
+
+        document.querySelectorAll('[inert]').forEach((el) => {
+          el.removeAttribute('inert');
+        });
+      })
+      .catch(() => {});
+  } catch (err) {
+    console.warn(`[portal] Warning saat menutup pengumuman: ${err.message}`);
+  }
+}
+
 async function performFullLogin(env) {
   const timeout = Number(env.PLAYWRIGHT_TIMEOUT || 60000);
   const browser = await launchBrowser(env);
-  const context = await browser.newContext({
-    locale: 'id-ID',
-    viewport: { width: 1400, height: 900 },
-  });
-  const page = await context.newPage();
-  page.setDefaultTimeout(timeout);
-
-  console.log(`[portal] Membuka ${env.PORTAL_URL}`);
-  await page.goto(env.PORTAL_URL, { waitUntil: 'domcontentloaded' });
-
-  const userSel = env.PORTAL_SELECTOR_USERNAME || 'input[name="username"]';
-  const passSel = env.PORTAL_SELECTOR_PASSWORD || 'input[name="password"]';
-  const submitSel = env.PORTAL_SELECTOR_SUBMIT || '#login-btn';
-
-  await page.waitForSelector(userSel);
-  await page.fill(userSel, env.PORTAL_USERNAME);
-  await page.fill(passSel, env.PORTAL_PASSWORD);
-
-  const challengeStartedAt = Date.now() - 2000;
-  await page.click(submitSel);
-  console.log('[portal] Form login dikirim, menunggu verifikasi email / dashboard...');
-
-  await Promise.race([
-    page.waitForURL(/\?user=|magiclink|dashboard|home|verify|2fa/i, { timeout: 25000 }).catch(() => null),
-    page.waitForLoadState('networkidle', { timeout: 25000 }).catch(() => null),
-  ]);
-  await page.waitForTimeout(1000);
-
-  const pageText = (await page.locator('body').innerText().catch(() => '')) || '';
-  const urlNow = page.url();
-  const waitingForEmail =
-    /\?user=/i.test(urlNow) ||
-    /melanjutkan login|Login Two Step|cek email|periksa email|check your email|magic ?link|two[-\s]?step/i.test(
-      pageText
-    );
-
-  const otpFound = waitingForEmail
-    ? null
-    : await findOtpInput(page, env.PORTAL_SELECTOR_OTP_INPUT, Number(env.OTP_DETECT_MS || 8000));
-
-  const needsChallenge = waitingForEmail || Boolean(otpFound);
-
-  if (needsChallenge) {
-    console.log(
-      waitingForEmail
-        ? '[portal] Halaman menunggu verifikasi email (magic link) terdeteksi.'
-        : `[portal] Form OTP terdeteksi (${otpFound.selector}).`
-    );
-
-    const challenge = await fetchLoginChallenge({
-      credentialsPath: env.GOOGLE_CREDENTIALS_PATH,
-      tokenPath: env.GMAIL_TOKEN_PATH,
-      from: env.GMAIL_OTP_FROM,
-      subject: env.GMAIL_OTP_SUBJECT,
-      afterMs: challengeStartedAt,
-      waitMs: Number(env.OTP_WAIT_MS || 180000),
-      pollIntervalMs: Number(env.OTP_POLL_INTERVAL_MS || 4000),
-      portalHost: (() => {
-        try {
-          return new URL(env.PORTAL_URL).host;
-        } catch {
-          return 'sso.mercubuana-yogya.ac.id';
-        }
-      })(),
+  try {
+    const context = await browser.newContext({
+      locale: 'id-ID',
+      viewport: { width: 1400, height: 900 },
     });
+    const page = await context.newPage();
+    page.setDefaultTimeout(timeout);
 
-    if (challenge.type === 'magiclink') {
-      console.log(`[portal] Membuka magic link dari email...`);
-      console.log(`[portal] ${challenge.value.slice(0, 80)}...`);
-      await page.goto(challenge.value, { waitUntil: 'domcontentloaded' });
-      await page.waitForLoadState('networkidle').catch(() => {});
-      await page.waitForTimeout(1500);
-      console.log('[portal] Magic link dibuka.');
-    } else {
-      const input =
-        otpFound ||
-        (await findOtpInput(page, env.PORTAL_SELECTOR_OTP_INPUT, 10000));
-      if (!input) {
-        throw new Error('Email berisi OTP numerik tetapi form OTP tidak ditemukan di halaman.');
+    console.log(`[portal] Membuka ${env.PORTAL_URL}`);
+    await page.goto(env.PORTAL_URL, { waitUntil: 'domcontentloaded' });
+
+    await dismissAnnouncements(page);
+
+    const userSel = env.PORTAL_SELECTOR_USERNAME || 'input[name="username"]';
+    const passSel = env.PORTAL_SELECTOR_PASSWORD || 'input[name="password"]';
+    const submitSel = env.PORTAL_SELECTOR_SUBMIT || '#login-btn';
+
+    await page.waitForSelector(userSel);
+    await page.fill(userSel, env.PORTAL_USERNAME);
+    await page.fill(passSel, env.PORTAL_PASSWORD);
+
+    await dismissAnnouncements(page);
+
+    const challengeStartedAt = Date.now() - 2000;
+    try {
+      await page.click(submitSel, { timeout: 10000 });
+    } catch (err) {
+      console.log(`[portal] page.click biasa gagal (${err.message}), mencoba dismiss ulang & force click...`);
+      await dismissAnnouncements(page);
+      try {
+        await page.locator(submitSel).click({ force: true, timeout: 5000 });
+      } catch {
+        await page.press(passSel, 'Enter').catch(() => {});
       }
-      await input.locator.fill(challenge.value);
-      const otpSubmitSel = env.PORTAL_SELECTOR_OTP_SUBMIT || '#login-btn, button[type="submit"]';
-      const submitBtn = page.locator(otpSubmitSel).first();
-      if ((await submitBtn.count()) > 0) await submitBtn.click();
-      else await input.locator.press('Enter');
-      await page.waitForLoadState('networkidle').catch(() => {});
-      console.log('[portal] OTP dikirim.');
     }
-  } else {
-    console.log('[portal] Tidak ada challenge email — lanjut.');
+    console.log('[portal] Form login dikirim, menunggu verifikasi email / dashboard...');
+
+    await Promise.race([
+      page.waitForURL(/\?user=|magiclink|dashboard|home|verify|2fa/i, { timeout: 25000 }).catch(() => null),
+      page.waitForLoadState('networkidle', { timeout: 25000 }).catch(() => null),
+    ]);
+    await page.waitForTimeout(1000);
+
+    const pageText = (await page.locator('body').innerText().catch(() => '')) || '';
+    const urlNow = page.url();
+    const waitingForEmail =
+      /\?user=/i.test(urlNow) ||
+      /melanjutkan login|Login Two Step|cek email|periksa email|check your email|magic ?link|two[-\s]?step/i.test(
+        pageText
+      );
+
+    const otpFound = waitingForEmail
+      ? null
+      : await findOtpInput(page, env.PORTAL_SELECTOR_OTP_INPUT, Number(env.OTP_DETECT_MS || 8000));
+
+    const needsChallenge = waitingForEmail || Boolean(otpFound);
+
+    if (needsChallenge) {
+      console.log(
+        waitingForEmail
+          ? '[portal] Halaman menunggu verifikasi email (magic link) terdeteksi.'
+          : `[portal] Form OTP terdeteksi (${otpFound.selector}).`
+      );
+
+      const challenge = await fetchLoginChallenge({
+        credentialsPath: env.GOOGLE_CREDENTIALS_PATH,
+        tokenPath: env.GMAIL_TOKEN_PATH,
+        from: env.GMAIL_OTP_FROM,
+        subject: env.GMAIL_OTP_SUBJECT,
+        afterMs: challengeStartedAt,
+        waitMs: Number(env.OTP_WAIT_MS || 180000),
+        pollIntervalMs: Number(env.OTP_POLL_INTERVAL_MS || 4000),
+        portalHost: (() => {
+          try {
+            return new URL(env.PORTAL_URL).host;
+          } catch {
+            return 'sso.mercubuana-yogya.ac.id';
+          }
+        })(),
+      });
+
+      if (challenge.type === 'magiclink') {
+        console.log(`[portal] Membuka magic link dari email...`);
+        console.log(`[portal] ${challenge.value.slice(0, 80)}...`);
+        await page.goto(challenge.value, { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle').catch(() => {});
+        await page.waitForTimeout(1500);
+        console.log('[portal] Magic link dibuka.');
+      } else {
+        const input =
+          otpFound ||
+          (await findOtpInput(page, env.PORTAL_SELECTOR_OTP_INPUT, 10000));
+        if (!input) {
+          throw new Error('Email berisi OTP numerik tetapi form OTP tidak ditemukan di halaman.');
+        }
+        await input.locator.fill(challenge.value);
+        const otpSubmitSel = env.PORTAL_SELECTOR_OTP_SUBMIT || '#login-btn, button[type="submit"]';
+        const submitBtn = page.locator(otpSubmitSel).first();
+        if ((await submitBtn.count()) > 0) await submitBtn.click();
+        else await input.locator.press('Enter');
+        await page.waitForLoadState('networkidle').catch(() => {});
+        console.log('[portal] OTP dikirim.');
+      }
+    } else {
+      console.log('[portal] Tidak ada challenge email — lanjut.');
+    }
+
+    await page.waitForTimeout(1500);
+    console.log(`[portal] URL sekarang: ${page.url()}`);
+
+    if (!(await isLoggedIn(page, env))) {
+      throw new Error(
+        'Login belum selesai setelah challenge email. Periksa magic link di Gmail mahasiswa.'
+      );
+    }
+
+    await saveAuthState(context, env);
+    return { browser, context, page };
+  } catch (err) {
+    await browser.close().catch(() => {});
+    throw err;
   }
-
-  await page.waitForTimeout(1500);
-  console.log(`[portal] URL sekarang: ${page.url()}`);
-
-  if (!(await isLoggedIn(page, env))) {
-    throw new Error(
-      'Login belum selesai setelah challenge email. Periksa magic link di Gmail mahasiswa.'
-    );
-  }
-
-  await saveAuthState(context, env);
-  return { browser, context, page };
 }
 
 async function loginPortal(env) {

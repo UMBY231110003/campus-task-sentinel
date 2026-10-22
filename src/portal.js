@@ -712,7 +712,7 @@ async function scrapeElearning(page, env, context) {
             }
           });
 
-        const uniqueSections = sections.slice(0, 40);
+        const uniqueSections = sections.slice(0, 60);
 
         return {
           title: document.title,
@@ -733,7 +733,7 @@ async function scrapeElearning(page, env, context) {
       }
       if (courseData.sections.length) {
         combinedText += `Sections:\n`;
-        for (const s of courseData.sections.slice(0, 30)) {
+        for (const s of courseData.sections.slice(0, 50)) {
           // Item khusus: section bernama (bukan "new section") ikut notifikasi
           // meski belum ada aktivitas di dalamnya.
           combinedText += `- ITEM_JSON:${JSON.stringify({
@@ -751,9 +751,8 @@ async function scrapeElearning(page, env, context) {
 
       const sectionLinks = courseData.sections
         .filter((s) => s.href && /section\.php/i.test(s.href))
-        // prioritaskan section dengan nomor/id lebih besar (biasanya lebih baru)
-        .sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
-        .slice(0, Number(env.ELEARNING_MAX_SECTIONS || 15));
+        // kunjungi semua section pertemuan
+        .slice(0, Number(env.ELEARNING_MAX_SECTIONS || 30));
 
       for (const sec of sectionLinks) {
         try {

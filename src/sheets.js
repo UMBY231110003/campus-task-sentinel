@@ -158,12 +158,14 @@ async function appendTaskIds(env, tasks) {
     t.judul_tugas,
     t.deadline || t.due || '',
     now,
+    t.section || '',
+    t.tipe || '',
   ]);
   const endRow = startRow + values.length - 1;
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: tabRange(tab, `A${startRow}:E${endRow}`),
+    range: tabRange(tab, `A${startRow}:G${endRow}`),
     valueInputOption: 'RAW',
     requestBody: { values },
   });

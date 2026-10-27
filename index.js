@@ -54,6 +54,36 @@ async function main() {
       return;
     }
 
+    // Persist full snapshot to data/tasks.json for direct consumption by Aether extension
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const dataDir = path.join(__dirname, 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const snapshot = {
+        updated_at: new Date().toISOString(),
+        run_id: process.env.GITHUB_RUN_ID ? Number(process.env.GITHUB_RUN_ID) : null,
+        count: tasks.length,
+        tasks: tasks.map((t) => ({
+          id: t.id,
+          matkul: t.matkul,
+          judul: t.judul_tugas,
+          deadline: t.deadline || t.due || '',
+          opened: t.opened || '',
+          due: t.due || '',
+          type: t.tipe || 'file',
+          section: t.section || '',
+          deskripsi: t.deskripsi || '',
+        })),
+      };
+      fs.writeFileSync(path.join(dataDir, 'tasks.json'), JSON.stringify(snapshot, null, 2), 'utf8');
+      console.log(`[main] ${tasks.length} item aktif disimpan ke data/tasks.json.`);
+    } catch (saveErr) {
+      console.warn('[main] Gagal menyimpan data/tasks.json:', saveErr.message);
+    }
+
     console.log(
       `[main] Sample items: ${tasks
         .slice(0, 8)

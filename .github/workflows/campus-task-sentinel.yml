@@ -15,6 +15,8 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -106,3 +108,11 @@ jobs:
         with:
           path: credentials/auth-state.json
           key: auth-state-${{ github.repository }}-v1-${{ github.run_id }}
+
+      - name: Commit and push tasks snapshot
+        if: always() && hashFiles('data/tasks.json') != ''
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/tasks.json
+          git diff --staged --quiet || (git commit -m "chore(data): auto-sync tasks snapshot [skip ci]" && git push origin main)

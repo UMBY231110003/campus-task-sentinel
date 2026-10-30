@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-10-30T07:52:32.336Z",
-  "run_id": 41022550395,
-  "count": 113,
+  "updated_at": "2026-10-30T14:41:54.250Z",
+  "run_id": 41073551578,
+  "count": 117,
   "tasks": [
     {
       "id": "Deep_Learning_22D_file_857752",
@@ -495,7 +495,7 @@
       "opened": "",
       "due": "",
       "type": "file",
-      "section": "TTE-06: Desain Penelitian (22-10-2026)",
+      "section": "TTE-06: Desain Penelitian-1 (22-10-2026)",
       "deskripsi": ""
     },
     {
@@ -506,7 +506,29 @@
       "opened": "",
       "due": "",
       "type": "file",
-      "section": "TTE-06: Desain Penelitian (22-10-2026)",
+      "section": "TTE-06: Desain Penelitian-1 (22-10-2026)",
+      "deskripsi": ""
+    },
+    {
+      "id": "Metodologi_Riset_Teknologi_Informasi_22D_file_874145",
+      "matkul": "Metodologi Riset Teknologi Informasi (22D)",
+      "judul": "Modul-07-DesainPenelitian-2-Slide",
+      "deadline": "",
+      "opened": "",
+      "due": "",
+      "type": "file",
+      "section": "TTE-07: Desain Penelitian-2 (29-10-2026)",
+      "deskripsi": ""
+    },
+    {
+      "id": "Metodologi_Riset_Teknologi_Informasi_22D_file_874144",
+      "matkul": "Metodologi Riset Teknologi Informasi (22D)",
+      "judul": "Kuis TTE-7-MP-kelas-22D",
+      "deadline": "",
+      "opened": "",
+      "due": "",
+      "type": "file",
+      "section": "TTE-07: Desain Penelitian-2 (29-10-2026)",
       "deskripsi": ""
     },
     {
@@ -567,12 +589,23 @@
     {
       "id": "Metodologi_Riset_Teknologi_Informasi_22D_section_587684",
       "matkul": "Metodologi Riset Teknologi Informasi (22D)",
-      "judul": "TTE-06: Desain Penelitian (22-10-2026)",
+      "judul": "TTE-06: Desain Penelitian-1 (22-10-2026)",
       "deadline": "",
       "opened": "",
       "due": "",
       "type": "section",
-      "section": "TTE-06: Desain Penelitian (22-10-2026)",
+      "section": "TTE-06: Desain Penelitian-1 (22-10-2026)",
+      "deskripsi": ""
+    },
+    {
+      "id": "Metodologi_Riset_Teknologi_Informasi_22D_section_587685",
+      "matkul": "Metodologi Riset Teknologi Informasi (22D)",
+      "judul": "TTE-07: Desain Penelitian-2 (29-10-2026)",
+      "deadline": "",
+      "opened": "",
+      "due": "",
+      "type": "section",
+      "section": "TTE-07: Desain Penelitian-2 (29-10-2026)",
       "deskripsi": ""
     },
     {
@@ -738,7 +771,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 03 : Jumat 2 Okt 2026 : 20.00 WIB : Video Conference",
-      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/tcp-njjb-enc Otherwise, to join by phone, dial +1 402-623-0331 and enter this PIN: 332 364 051#"
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/tcp-njjb-encOtherwise, to join by phone, dial +1 402-623-0331 and enter this PIN: 332 364 051#"
     },
     {
       "id": "Teknik_Klasifikasi_dan_Pengenalan_Pola_22D_file_866515",
@@ -855,11 +888,22 @@
       "matkul": "Teknik Klasifikasi dan Pengenalan Pola (22D)",
       "judul": "Tugas TKPP 07 22D",
       "deadline": "Friday, 6 November 2026, 8:00 PM",
-      "opened": "",
+      "opened": "Friday, 30 October 2026, 8:00 PM",
       "due": "Friday, 6 November 2026, 8:00 PM",
       "type": "tugas",
       "section": "Minggu 07 : Jumat 30 Okt 2026 : 20.00 WIB : Video Conference",
       "deskripsi": "Tulis jawaban dengan tangan, scan dan submit ya. Tugas TKPP TM 07.pdf 30 October 2026, 1:45 PM"
+    },
+    {
+      "id": "Teknik_Klasifikasi_dan_Pengenalan_Pola_22D_link_874217",
+      "matkul": "Teknik Klasifikasi dan Pengenalan Pola (22D)",
+      "judul": "Link Vicon Minggu 7",
+      "deadline": "",
+      "opened": "",
+      "due": "",
+      "type": "link",
+      "section": "Minggu 07 : Jumat 30 Okt 2026 : 20.00 WIB : Video Conference",
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/vkh-pjhc-kyuOtherwise, to join by phone, dial +1 651-395-7218 and enter this PIN: 659 725 243#"
     },
     {
       "id": "Teknik_Klasifikasi_dan_Pengenalan_Pola_22D_section_589259",
@@ -969,7 +1013,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 1 : Selasa 15 Sept 2026 : 17.00 WIB : Video Conference",
-      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/zwp-skex-obwOtherwise, to join by phone, dial +1 530-453-9039 and enter this PIN: 829 855 284#"
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/zwp-skex-obw Otherwise, to join by phone, dial +1 530-453-9039 and enter this PIN: 829 855 284#"
     },
     {
       "id": "Teknik_Pengolahan_Citra_22D_file_857159",
@@ -1035,7 +1079,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 2 : Selasa 22 Sept 2026 : 17.00 WIB : Video Conference",
-      "deskripsi": "o join the video meeting, click this link: https://meet.google.com/uxv-cpgq-djj Otherwise, to join by phone, dial +1 970-426-5127 and enter this PIN: 390 634 621#"
+      "deskripsi": "o join the video meeting, click this link: https://meet.google.com/uxv-cpgq-djjOtherwise, to join by phone, dial +1 970-426-5127 and enter this PIN: 390 634 621#"
     },
     {
       "id": "Teknik_Pengolahan_Citra_22D_file_862591",
@@ -1068,7 +1112,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 3 : Selasa 29 Sept 2026 : 17.00 WIB : Video Conference",
-      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/xdq-fowk-dguOtherwise, to join by phone, dial +1 585-535-3332 and enter this PIN: 583 235 114#"
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/xdq-fowk-dgu Otherwise, to join by phone, dial +1 585-535-3332 and enter this PIN: 583 235 114#"
     },
     {
       "id": "Teknik_Pengolahan_Citra_22D_file_865658",
@@ -1101,7 +1145,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 4 : Selasa 5 Okt 2026 : 17.00 WIB : Video Conference",
-      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/wrd-qsue-kcqOtherwise, to join by phone, dial +1 909-906-0455 and enter this PIN: 141 750 270#"
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/wrd-qsue-kcq Otherwise, to join by phone, dial +1 909-906-0455 and enter this PIN: 141 750 270#"
     },
     {
       "id": "Teknik_Pengolahan_Citra_22D_file_867677",
@@ -1156,7 +1200,7 @@
       "due": "",
       "type": "link",
       "section": "Minggu 7 : Selasa 26 Okt 2026 : 17.00 WIB : Video Conference",
-      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/eix-nxhi-hdh Otherwise, to join by phone, dial +1 515-518-4427 and enter this PIN: 220 081 764#"
+      "deskripsi": "To join the video meeting, click this link: https://meet.google.com/eix-nxhi-hdhOtherwise, to join by phone, dial +1 515-518-4427 and enter this PIN: 220 081 764#"
     },
     {
       "id": "Teknik_Pengolahan_Citra_22D_section_587644",
